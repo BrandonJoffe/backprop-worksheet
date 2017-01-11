@@ -25,7 +25,7 @@
 \maketitle
 
 \begin{abstract}
-This document serves as a reference for students, engineers and researchers who occasionally need to work through the analytical computation of gradients and backpropagation update calculations. The document is an ongoing effort and there may be errors. Please feel free to send pull requests with new layers or corrections.
+This document serves as a reference for students, engineers and researchers who occasionally need to work through the analytic computation of gradients and back-propagation update calculations. The document is an ongoing effort and there may be errors. Please feel free to send pull requests with new layers or corrections.
 \end{abstract}
 
 \tableofcontents
@@ -37,8 +37,9 @@ This document serves as a reference for students, engineers and researchers who 
 \caption{This image illustrates a general view of a network layer that is useful to understand back propagation. The layer takes inputs $X$, parameters $\Theta$ and produces an output $Y$. Computing the output is performed during the forward pass. Updating the parameters and passing the error signal $\Delta$ back from the next layer is performed during the backward pass.}
 \end{figure}
 We will consider here the most general function description of a neural network layer where the network takes in a multi-dimensional input $X$ and a set of tunable parameters $\Theta$. It produces a multi-dimensioanl output $Y$. When $X,Y,\Theta$ are scalars we will refer to them as $x,y,\theta$. Instead of $\Theta$ and $\theta$ we may also use $W,w,B,b$ if the context is related to convolution. Figure \ref{fig:general} illustrates this setup. We will try to preserve this notation throughout the document to aid in understanding and implementation. Each Section is intended to be independent of the others although there may be cross referencing.
+
+%+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 \newpage
-%\input{LayerFigure.tex}
 \section{Neuron activation functions}
 Neuron activation functions take a single input and produce a single output. There are two groups of such functions: those with tunable parameters and those without. However in the general case we can write down the following function
 \begin{equation}
@@ -50,8 +51,8 @@ where $x$ is a scalar input, $y$ is a scalar output and $\theta$ is a vector of 
 \frac{\partial E }{\partial \theta_i} = & \delta \frac{\partial f(x,\theta)}{\partial \theta_i}.
 \end{align}
 
-\subsection{Non-tunable}
-\subsubsection{ReLU}
+%---------------------------------------------------------------
+\subsection{ReLU}
 The {\bf Re}ctified {\bf L}inear {\bf U}nit function is given by
 \begin{equation}
 f(x)=\left\{\begin{matrix}
@@ -69,25 +70,59 @@ Finding it's derivative is straightforward. We simply find the derivative for ea
 = & \left [ \delta \right ]_{x \geq 0}
 \end{align}
 In other words ReLU acts like an on/off switch for error signals. If the input $x$ was greater than or equal to zero then the error signal $\delta$ will be passed back to the next layer down. If not then no error signal will be funneled through and anything behind this neuron will not be updated. 
+%---------------------------------------------------------------
+\subsection{Leaky ReLU}
+%---------------------------------------------------------------
+\subsection{Sigmoid}
+%---------------------------------------------------------------
+\subsection{TanH}
+%---------------------------------------------------------------
+\subsection{Absolute value}
+%---------------------------------------------------------------
+\subsection{Power}
 
-\subsection{Tunable}
-\subsubsection{Leaky ReLU}
 
+%+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+\newpage
 \section{Windowed functions}
-The family of functions which considers a window of a spatial input includes among others pooling and convolutional layers. There are often many ways to perform back propagation across these layers and usually depends on the desired performance considerations when implemented in a computer.  To index into our input $X$ which will typically be $C \times H \times W$, we will use the following: $i \in 0 \cdots H-1$ traverses the rows (y direction in image), $j \in 0 \cdots W-1$ traverses the columns (x direction in image) and $c \in 0 \cdots C-1$ traverses the channels (colors or filters direction often called depth). Once again we can split the types of windowed functions into those that are tunable and non-tunable.
+The family of functions which considers a window of a spatial input includes among others pooling and convolutional layers. There are often many ways to perform back propagation across these layers and usually depends on the desired performance considerations when implemented in a computer.  To index into our input $X$ which will typically be $C \times H \times W$, we will use the following: $i \in 0 \cdots H-1$ traverses the rows (y direction in image), $j \in 0 \cdots W-1$ traverses the columns (x direction in image) and $c \in 0 \cdots C-1$ traverses the channels (colors or filters direction often called depth).
 
-\subsection{Non-tunable}
-\subsubsection{Max pooling}
+%---------------------------------------------------------------
+\subsection{Max pooling}
 Max pooling takes in a 
 \begin{equation}
 f(X)=\max\limits_{i \in 0 \cdots n} x_i
 \end{equation}
+%---------------------------------------------------------------
+\subsection{Max unpooling}
+%---------------------------------------------------------------
+\subsection{Average pooling}
+%---------------------------------------------------------------
+\subsection{Average unpooling}
+%---------------------------------------------------------------
+\subsection{Mean Variance Normalization (Instance norm)}
+%---------------------------------------------------------------
+\subsection{Convolution}
+%---------------------------------------------------------------
+\subsection{Deconvolution(tranposed convolution)}
 
-\subsubsection{Average pooling}
-\subsection{Tunable}
+%+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 \newpage
+\section{Restructuring functions}
+There are numerous cases where the structure of the input data need to be adjusted such as flattening, cropping, padding, resizing and more. In these cases the challenge is to figure out how to perform back prop on the data which has been moved around, cut off or added. 
+%---------------------------------------------------------------
+\subsection{Padding}
+%---------------------------------------------------------------
+\subsection{Cropping}
 
+%+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+\newpage
 \section{Loss functions}
+%---------------------------------------------------------------
+\subsection{Euclidean}
+%---------------------------------------------------------------
+\subsection{Cross entropy}
+%---------------------------------------------------------------
 \subsection{Discrete total variation}
 
 The discrete total variation can be written as 
@@ -117,8 +152,10 @@ where $i \in (0\dots H-1)$ and $j \in (0\dots W-1)$. $U$ is used to represent th
 \end{split}
 \end{align}
 
+%+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 \newpage
 \section{Matrix functions}
+%---------------------------------------------------------------
 \subsection{Gram matrix}
 The (un-normalized) Gram matrix is computed as
 \begin{equation}
@@ -160,8 +197,6 @@ and as a matrix expression
 \newpage
 
 
-%\subsection{Non tunable activation}
-%sss
 %  {\small
   %      \bibliographystyle{ieee}
   %      \bibliography{egbib}
