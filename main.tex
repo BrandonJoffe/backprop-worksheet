@@ -1,0 +1,173 @@
+\documentclass[a4paper]{article}
+
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{matrix,chains,positioning,decorations.pathreplacing,arrows}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage[pagebackref=true,breaklinks=true,letterpaper=true,colorlinks,bookmarks=false,linktoc=all]{hyperref}
+
+\usepackage{titlesec}
+\hypersetup{
+    colorlinks,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=black
+}
+
+\title{Back propagation reference}
+%\author{Aaron Wetzler, Dor Verbin}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This document serves as a reference for students, engineers and researchers who occasionally need to work through the analytical computation of gradients and backpropagation update calculations. The document is an ongoing effort and there may be errors. Please feel free to send pull requests with new layers or corrections.
+\end{abstract}
+
+\tableofcontents
+\newpage
+\section{Intro}
+\begin{figure}\label{fig:general}
+\centering
+\includegraphics[width=0.75\textwidth]{ForwardBackward.png}
+\caption{This image illustrates a general view of a network layer that is useful to understand back propagation. The layer takes inputs $X$, parameters $\Theta$ and produces an output $Y$. Computing the output is performed during the forward pass. Updating the parameters and passing the error signal $\Delta$ back from the next layer is performed during the backward pass.}
+\end{figure}
+We will consider here the most general function description of a neural network layer where the network takes in a multi-dimensional input $X$ and a set of tunable parameters $\Theta$. It produces a multi-dimensioanl output $Y$. When $X,Y,\Theta$ are scalars we will refer to them as $x,y,\theta$. Instead of $\Theta$ and $\theta$ we may also use $W,w,B,b$ if the context is related to convolution. Figure \ref{fig:general} illustrates this setup. We will try to preserve this notation throughout the document to aid in understanding and implementation. Each Section is intended to be independent of the others although there may be cross referencing.
+\newpage
+%\input{LayerFigure.tex}
+\section{Neuron activation functions}
+Neuron activation functions take a single input and produce a single output. There are two groups of such functions: those with tunable parameters and those without. However in the general case we can write down the following function
+\begin{equation}
+y = f(x,\theta),
+\end{equation}
+where $x$ is a scalar input, $y$ is a scalar output and $\theta$ is a vector of tunable parameters. The backprop equations here are 
+\begin{align}
+\frac{\mathrm{d} E }{\mathrm{d} x} = & \delta \frac{\mathrm{d} f(x,\theta)}{\mathrm{d} x}\\
+\frac{\partial E }{\partial \theta_i} = & \delta \frac{\partial f(x,\theta)}{\partial \theta_i}.
+\end{align}
+
+\subsection{Non-tunable}
+\subsubsection{ReLU}
+The {\bf Re}ctified {\bf L}inear {\bf U}nit function is given by
+\begin{equation}
+f(x)=\left\{\begin{matrix}
+ & 0 & x< 0\\ 
+ & x & x \geq 0
+\end{matrix}\right.
+\end{equation}
+Finding it's derivative is straightforward. We simply find the derivative for each section in it's domain.
+\begin{align}
+\frac{\mathrm{d} E }{\mathrm{d} x}= &
+\delta \left\{\begin{matrix}
+ & 0 & x< 0\\ 
+ & 1 & x \geq 0
+\end{matrix}\right. \\
+= & \left [ \delta \right ]_{x \geq 0}
+\end{align}
+In other words ReLU acts like an on/off switch for error signals. If the input $x$ was greater than or equal to zero then the error signal $\delta$ will be passed back to the next layer down. If not then no error signal will be funneled through and anything behind this neuron will not be updated. 
+
+\subsection{Tunable}
+\subsubsection{Leaky ReLU}
+
+\section{Windowed functions}
+The family of functions which considers a window of a spatial input includes among others pooling and convolutional layers. There are often many ways to perform back propagation across these layers and usually depends on the desired performance considerations when implemented in a computer.  To index into our input $X$ which will typically be $C \times H \times W$, we will use the following: $i \in 0 \cdots H-1$ traverses the rows (y direction in image), $j \in 0 \cdots W-1$ traverses the columns (x direction in image) and $c \in 0 \cdots C-1$ traverses the channels (colors or filters direction often called depth). Once again we can split the types of windowed functions into those that are tunable and non-tunable.
+
+\subsection{Non-tunable}
+\subsubsection{Max pooling}
+Max pooling takes in a 
+\begin{equation}
+f(X)=\max\limits_{i \in 0 \cdots n} x_i
+\end{equation}
+
+\subsubsection{Average pooling}
+\subsection{Tunable}
+\newpage
+
+\section{Loss functions}
+\subsection{Discrete total variation}
+
+The discrete total variation can be written as 
+\begin{equation}
+TV(U)= \sum_{i,j} \left ( \left ( U_{ij+1}-U_{ij}\right )^2 + \left ( U_{i+1j}-U_{ij}\right )^2 \right )^{1/2},
+\end{equation}
+where $i \in (0\dots H-1)$ and $j \in (0\dots W-1)$. $U$ is used to represent the image and has dimensions $H \times W$. For the sake of simplicity we will assume a single channel because the result shown here will simply be redone for all channels and all examples in a batch. In this case the {\it total variation} is a loss and therefore our backprop update only requires that we compute the gradient of $TV$ with respect to the image
+
+\begin{align}
+\begin{split}
+\frac{\partial{E}}{\partial{U_{mn}}} = & \frac{\partial{TV(U)}}{\partial{U_{mn}}} \\
+ = & \sum_{i,j} \frac{\partial \left ( \left ( U_{ij+1}-U_{ij}\right )^2 + \left ( U_{i+1j}-U_{ij}\right )^2 \right )^{1/2}}{\partial U_{mn}}\\
+  = & \sum_{i,j} \frac{1}{2}\frac{1}{ \left | \nabla U_{ij} \right |_2}\left [ 2(U_{ij+1}-U{ij})(\frac{\partial U_{ij+1}}{\partial U_{mn}} - \frac{\partial U_{ij}}{\partial U_{mn}}) + 2(U_{i+1j}-U{ij})(\frac{\partial U_{i+1j}}{\partial U_{mn}} - \frac{\partial U_{ij}}{\partial U_{mn}}) \right ] \\
+  = & 
+  \sum_{i,j}  \frac{1}{ \left | \nabla U_{ij} \right |_2}
+  \left [ \frac{\partial U_{ij+1}}{\partial U_{mn}}\left ( U_{ij+1}-U_{ij} \right )\right] + 
+  \sum_{i,j}  \frac{1}{ \left | \nabla U_{ij} \right |_2} 
+  \left [\frac{\partial U_{i+1j}}{\partial U_{mn}} \left (U_{i+1j}-U_{ij} \right ) \right] -\\
+   & \sum_{i,j}  \frac{1}{ \left | \nabla U_{ij} \right |_2}
+   \left [ \frac{\partial U_{ij}}{\partial U_{mn}} \left ( U_{ij+1}-U_{ij}\right ) \right] - 
+   \sum_{i,j}  \frac{1}{ \left | \nabla U_{ij} \right |_2}
+   \left [ \frac{\partial U_{ij}}{\partial U_{mn}} \left ( U_{i+1j}-U_{ij}\right ) \right]\\
+  = & \frac{\left (U_{mn}-U_{mn-1} \right )}{ \left (\left ( U_{mn}-U_{mn-1}\right )^2 + \left ( U_{m+1n-1}-U_{mn-1}\right )^2 \right )^{1/2}} + \\
+    & \frac{\left (U_{mn}-U_{m-1n} \right )}{ \left (\left ( U_{m-1n+1}-U_{m-1n}\right )^2 + \left ( U_{mn}-U_{m-1n}\right )^2 \right )^{1/2}} -\\
+    & \frac{\left (U_{mn+1}-U_{mn} \right )}{ \left (\left ( U_{mn+1}-U_{mn}\right )^2 + \left ( U_{m+1n}-U_{mn}\right )^2 \right )^{1/2}} -\\
+    & \frac{\left (U_{m+1n}-U_{mn} \right )}{ \left (\left ( U_{mn+1}-U_{mn}\right )^2 + \left ( U_{m+1n}-U_{mn}\right )^2 \right )^{1/2}} \\
+\end{split}
+\end{align}
+
+\newpage
+\section{Matrix functions}
+\subsection{Gram matrix}
+The (un-normalized) Gram matrix is computed as
+\begin{equation}
+G(X)=XX^T,
+\end{equation}
+where X is a $C\times N$ matrix. We denote a row of $X$ as $X_i$ and an element as $X_{ik}$. This implies that the Gram matrix can be written as
+\begin{equation}
+G_{ij}=\left \langle X_i,X_j \right \rangle = \sum_{k=0}^{N-1} X_{ik} X_{jk},
+\end{equation}
+where $i,j \in (0\dots C-1)$.Now for backprop we need to compute the following backprop quantity
+\begin{equation}
+\frac{\partial{E}}{\partial{X_{cn}}} = \sum_{i,j}\delta_{ij} \frac{\partial{G_{ij}}}{\partial{X_{cn}}}.
+\end{equation}
+Here $E$ is the total loss for a single input example and $\delta$ is the gradient signal coming down from the next layer. The batch version will simply add the gradient for each example in the batch so to simplify notation we do not include the batch version here. 
+\begin{align}
+\begin{split}
+ \frac{\partial{G_{ij}}}{\partial{X_{cn}}} = & \frac{ \partial \left (\sum_{k=0}^{N-1}X_{ik}X_{jk}\right )  }{\partial{X_{cn}}}\\ 
+ = & \sum_{k=0}^{N-1} \left [ \frac{\partial{X_{ik}}}{\partial{X_{cn}}} X_{jk} + \frac{\partial{X_{jk}}}{\partial{X_{cn}}} X_{ik} \right ]\\ 
+ = & \sum_{k=0}^{N-1} \frac{\partial{X_{ik}}}{\partial{X_{cn}}} X_{jk} + \sum_{k=0}^{N-1} \frac{\partial{X_{jk}}}{\partial{X_{cn}}} X_{ik}\\ 
+ = & \left [ X_{jn} \right ]_{c=i} + \left [ X_{in} \right ]_{c=j} 
+\end{split}
+\end{align}
+So now we can write the backprop as
+\begin{align}
+\begin{split}
+ \frac{\partial{E}}{\partial{X_{cn}}}  = &  
+ \sum_{i,j} \delta_{ij} \left (\left [ X_{jn} \right ]_{c=i} + \left [ X_{in} \right ]_{c=j} \right )\\ 
+  = & \sum_{i,j} \delta_{ij} \left [ X_{jn} \right ]_{c=i} + \sum_{i,j} \delta_{ij} \left [ X_{in} \right ]_{c=j} \\ 
+  = &  \sum_{j} \delta_{cj} X_{jn} + \sum_{i} \delta_{ic}  X_{in} \\
+  = &  \sum_{i} \delta_{ci} X_{in} + \sum_{i} \delta_{ic}  X_{in} \\
+  = &  \sum_{i}  \left ( \delta_{ci}  + \delta_{ic}  \right) X_{in}\\
+  \end{split}
+\end{align}
+and as a matrix expression
+\begin{align}
+ \frac{\partial{E}}{\partial{X}}  = & (\delta +\delta^T)X
+\end{align}
+
+\newpage
+
+
+%\subsection{Non tunable activation}
+%sss
+%  {\small
+  %      \bibliographystyle{ieee}
+  %      \bibliography{egbib}
+  %  }
+    
+\end{document}
+    
+    
+    
