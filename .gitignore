@@ -1,0 +1,5 @@
+# Ignore compilation files
+main.dvi
+main.toc
+main.aux
+main.log
