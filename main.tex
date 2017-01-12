@@ -4,6 +4,7 @@
 \usepackage[utf8x]{inputenc}
 \usepackage{amsmath}
 \usepackage{graphicx}
+\usepackage{multicol}
 \usepackage{tikz}
 \usetikzlibrary{matrix,chains,positioning,decorations.pathreplacing,arrows}
 \usepackage[colorinlistoftodos]{todonotes}
@@ -46,7 +47,7 @@ Neuron activation functions take a single input and produce a single output. The
 y = f(x,\theta),
 \end{equation}
 where $x$ is a scalar input, $y$ is a scalar output and $\theta$ is a vector of tunable parameters. The backprop equations here are 
-\begin{align}
+\begin{align} \label{eq:elementwise}
 \frac{\mathrm{d} E }{\mathrm{d} x} = & \delta \frac{\mathrm{d} f(x,\theta)}{\mathrm{d} x}\\
 \frac{\partial E }{\partial \theta_i} = & \delta \frac{\partial f(x,\theta)}{\partial \theta_i}.
 \end{align}
@@ -60,10 +61,10 @@ f(x)=\left\{\begin{matrix}
  & x & x \geq 0
 \end{matrix}\right.
 \end{equation}
-Finding it's derivative is straightforward. We simply find the derivative for each section in it's domain.
+Finding its derivative is straightforward. We simply find the derivative for each section in its domain. We can directly compute the backprop gradient
 \begin{align}
-\frac{\mathrm{d} E }{\mathrm{d} x}= &
-\delta \left\{\begin{matrix}
+\frac{\mathrm{d} E }{\mathrm{d} x}= &\delta \frac{\mathrm{d} f }{\mathrm{d} x} \\
+= & \delta \left\{\begin{matrix}
  & 0 & x< 0\\ 
  & 1 & x \geq 0
 \end{matrix}\right. \\
@@ -73,9 +74,45 @@ In other words ReLU acts like an on/off switch for error signals. If the input $
 %---------------------------------------------------------------
 \subsection{Leaky ReLU}
 %---------------------------------------------------------------
-\subsection{Sigmoid}
-%---------------------------------------------------------------
 \subsection{TanH}
+For the hyperbolic tangent function (or TanH), 
+\begin{equation}
+f(x)=\tanh(x)=\frac{e^{x}-e^{-x}}{e^{x}+e^{-x}}
+\end{equation}
+Finding its derivative can be done using the quotient rule,
+\begin{align}
+\frac{\mathrm{d}f}{\mathrm{d}x}
+= & \frac{\mathrm{d}}{\mathrm{d}x}\frac{e^{x}-e^{-x}}{e^{x}+e^{-x}}\\
+= & \frac{(e^{x}+e^{-x})(e^{x}+e^{-x})-(e^{x}-e^{-x})(e^{x}-e^{-x})}{(e^{x}+e^{-x})^2}\\
+= & \frac{(e^{x}+e^{-x})^{2}-(e^{x}-e^{-x})^{2}}{(e^{x}+e^{-x})^2}\\
+= & 1 - \left ( \frac{e^{x}-e^{-x}}{e^{x}+e^{-x}} \right )^{2}\\
+= & 1 - \left( \tanh(x) \right)^{2}.
+\end{align}
+Plugging the derivative into equation \ref{eq:elementwise}, we get
+\begin{align}
+\frac{\mathrm{d} E }{\mathrm{d} x}= &\delta \frac{\mathrm{d} f }{\mathrm{d} x} \\
+= & \delta \left ( 1-y^{2} \right ).
+\end{align}
+
+%---------------------------------------------------------------
+\subsection{Sigmoid}
+The Sigmoid function is defined as
+\begin{equation}
+\sigma (x)= \frac{1}{1+e^{-x}}.
+\end{equation}
+Its derivative is simply
+\begin{align}
+\frac{\mathrm{d} \sigma }{\mathrm{d} x}&= - \frac{-e^{-x}}{\left( 1+e^{-x} \right)^{2}} \\
+&= \frac{1}{1+e^{-x}}\frac{e^{-x}}{1+e^{-x}} \\
+&= \frac{1}{1+e^{-x}}\left(1-\frac{1}{1+e^{-x}}\right)\\
+&= \sigma(x)\left(1-\sigma(x)\right).
+\end{align}
+Plugging the derivative into equation \ref{eq:elementwise}, we get
+\begin{align}
+\frac{\mathrm{d} E }{\mathrm{d} x}= &\delta \frac{\mathrm{d} \sigma }{\mathrm{d} x} \\
+= & \delta y\left ( 1-y \right ).
+\end{align}
+
 %---------------------------------------------------------------
 \subsection{Absolute value}
 %---------------------------------------------------------------
@@ -120,6 +157,22 @@ There are numerous cases where the structure of the input data need to be adjust
 \section{Loss functions}
 %---------------------------------------------------------------
 \subsection{Euclidean}
+The Euclidean loss is defined by the average of the square of the residuals and is written as
+\begin{equation}
+E(X,Y) = \frac{1}{CHW}\sum_{i,j,k}^{C,H,W} \frac{1}{2}\left (  X_{ijk} - Y_{ijk}\right )^2
+\end{equation}
+where here we arbitrarily assume an input $X$ with three dimensions and an output $Y$ with the same structure. 
+The loss function gradient which then typically becomes the first set of error signals $\Delta$ can be written as
+\begin{align}
+\delta_{cmn} 
+= &\frac{\partial E}{\partial X_{cmn}} \\
+= &\frac{1}{CHW}\sum_{i,j,k}^{C,H,W} \left (  X_{ijk} - Y_{ijk}\right ) \frac{X_{ijk}}{\partial X_{cmn}} \\
+= &\frac{1}{CHW}\left (  X_{cmn} - Y_{cmn}\right )
+\end{align}
+or in matrix form
+\begin{equation}
+\Delta = \frac{1}{CHW}\left (  X - Y\right )
+\end{equation}
 %---------------------------------------------------------------
 \subsection{Cross entropy}
 %---------------------------------------------------------------
@@ -127,28 +180,28 @@ There are numerous cases where the structure of the input data need to be adjust
 
 The discrete total variation can be written as 
 \begin{equation}
-TV(U)= \sum_{i,j} \left ( \left ( U_{ij+1}-U_{ij}\right )^2 + \left ( U_{i+1j}-U_{ij}\right )^2 \right )^{1/2},
+TV(X)= \sum_{i,j} \left ( \left ( X_{ij+1}-X_{ij}\right )^2 + \left ( X_{i+1j}-X_{ij}\right )^2 \right )^{1/2}= \sum_{i,j} \left | \nabla_{ij} X \right |_2 ,
 \end{equation}
-where $i \in (0\dots H-1)$ and $j \in (0\dots W-1)$. $U$ is used to represent the image and has dimensions $H \times W$. For the sake of simplicity we will assume a single channel because the result shown here will simply be redone for all channels and all examples in a batch. In this case the {\it total variation} is a loss and therefore our backprop update only requires that we compute the gradient of $TV$ with respect to the image
+where $i \in (0\dots H-1)$ and $j \in (0\dots W-1)$. $X$ is used to represent the image and has dimensions $H \times W$. For the sake of simplicity we will assume a single channel because the result shown here will simply be redone for all channels and all examples in a batch. In this case the {\it total variation} is a loss and therefore our backprop update only requires that we compute the gradient of $TV$ with respect to the image. Also note that for convenience of notation we use $\left | \nabla_{ij} X \right |_2$ to indicate the magnitude of the forward discrete derivative at $(ij)$.
 
 \begin{align}
 \begin{split}
-\frac{\partial{E}}{\partial{U_{mn}}} = & \frac{\partial{TV(U)}}{\partial{U_{mn}}} \\
- = & \sum_{i,j} \frac{\partial \left ( \left ( U_{ij+1}-U_{ij}\right )^2 + \left ( U_{i+1j}-U_{ij}\right )^2 \right )^{1/2}}{\partial U_{mn}}\\
-  = & \sum_{i,j} \frac{1}{2}\frac{1}{ \left | \nabla U_{ij} \right |_2}\left [ 2(U_{ij+1}-U{ij})(\frac{\partial U_{ij+1}}{\partial U_{mn}} - \frac{\partial U_{ij}}{\partial U_{mn}}) + 2(U_{i+1j}-U{ij})(\frac{\partial U_{i+1j}}{\partial U_{mn}} - \frac{\partial U_{ij}}{\partial U_{mn}}) \right ] \\
+\frac{\partial{E}}{\partial{X_{mn}}} = & \frac{\partial{TV(X)}}{\partial{X_{mn}}} \\
+ = & \sum_{i,j} \frac{\partial \left | \nabla_{ij} X \right |_2}{\partial X_{mn}}\\
+ = & \sum_{i,j} \frac{1}{2}\frac{1}{ \left | \nabla_{ij} X \right |_2}\left [ 2(X_{ij+1}-X{ij})(\frac{\partial X_{ij+1}}{\partial X_{mn}} - \frac{\partial X_{ij}}{\partial X_{mn}}) + 2(X_{i+1j}-X{ij})(\frac{\partial X_{i+1j}}{\partial X_{mn}} - \frac{\partial X_{ij}}{\partial X_{mn}}) \right ] \\
   = & 
-  \sum_{i,j}  \frac{1}{ \left | \nabla U_{ij} \right |_2}
-  \left [ \frac{\partial U_{ij+1}}{\partial U_{mn}}\left ( U_{ij+1}-U_{ij} \right )\right] + 
-  \sum_{i,j}  \frac{1}{ \left | \nabla U_{ij} \right |_2} 
-  \left [\frac{\partial U_{i+1j}}{\partial U_{mn}} \left (U_{i+1j}-U_{ij} \right ) \right] -\\
-   & \sum_{i,j}  \frac{1}{ \left | \nabla U_{ij} \right |_2}
-   \left [ \frac{\partial U_{ij}}{\partial U_{mn}} \left ( U_{ij+1}-U_{ij}\right ) \right] - 
-   \sum_{i,j}  \frac{1}{ \left | \nabla U_{ij} \right |_2}
-   \left [ \frac{\partial U_{ij}}{\partial U_{mn}} \left ( U_{i+1j}-U_{ij}\right ) \right]\\
-  = & \frac{\left (U_{mn}-U_{mn-1} \right )}{ \left (\left ( U_{mn}-U_{mn-1}\right )^2 + \left ( U_{m+1n-1}-U_{mn-1}\right )^2 \right )^{1/2}} + \\
-    & \frac{\left (U_{mn}-U_{m-1n} \right )}{ \left (\left ( U_{m-1n+1}-U_{m-1n}\right )^2 + \left ( U_{mn}-U_{m-1n}\right )^2 \right )^{1/2}} -\\
-    & \frac{\left (U_{mn+1}-U_{mn} \right )}{ \left (\left ( U_{mn+1}-U_{mn}\right )^2 + \left ( U_{m+1n}-U_{mn}\right )^2 \right )^{1/2}} -\\
-    & \frac{\left (U_{m+1n}-U_{mn} \right )}{ \left (\left ( U_{mn+1}-U_{mn}\right )^2 + \left ( U_{m+1n}-U_{mn}\right )^2 \right )^{1/2}} \\
+  \sum_{i,j}  \frac{1}{ \left | \nabla_{ij} X \right |_2}
+  \left [ \frac{\partial X_{ij+1}}{\partial X_{mn}}\left ( X_{ij+1}-X_{ij} \right )\right] + 
+  \sum_{i,j}  \frac{1}{ \left | \nabla_{ij} X \right |_2} 
+  \left [\frac{\partial X_{i+1j}}{\partial X_{mn}} \left (X_{i+1j}-X_{ij} \right ) \right] -\\
+   & \sum_{i,j}  \frac{1}{ \left | \nabla_{ij} X \right |_2}
+   \left [ \frac{\partial X_{ij}}{\partial X_{mn}} \left ( X_{ij+1}-X_{ij}\right ) \right] - 
+   \sum_{i,j}  \frac{1}{ \left | \nabla_{ij} X \right |_2}
+   \left [ \frac{\partial X_{ij}}{\partial X_{mn}} \left ( X_{i+1j}-X_{ij}\right ) \right]\\
+  = & \frac{\left (X_{mn}-X_{mn-1} \right )}{\left | \nabla_{mn-1} X \right |_2} + 
+      \frac{\left (X_{mn}-X_{m-1n} \right )}{\left | \nabla_{m-1n} X \right |_2} -
+     \frac{\left (X_{mn+1}-X_{mn} \right )}{\left | \nabla_{mn} X \right |_2} -
+      \frac{\left (X_{m+1n}-X_{mn} \right )}{\left | \nabla_{mn} X \right |_2} 
 \end{split}
 \end{align}
 
@@ -156,23 +209,61 @@ where $i \in (0\dots H-1)$ and $j \in (0\dots W-1)$. $U$ is used to represent th
 \newpage
 \section{Matrix functions}
 %---------------------------------------------------------------
+\subsection{Fully connected layer (inner product)}
+The fully connected layer takes a fixed size input and linearly mixes every input value with every other and then adds an offset to produce an output with a defined size. This is written in matrix form as
+\begin{equation}
+F(x;W,b)=Wx +b,
+\end{equation}
+and elementwise as
+\begin{equation}
+y_{i}=b_i+\sum_k W_{ik}x_{k},
+\end{equation}
+where $x$ is a vector which has typically been flattened from a multi-dimensional input, $W$ is a mixing matrix, $b$ is an offset vector and $y$ is the result vector matching the required dimensions. We can write our backprop equations as 
+\begin{align}
+\frac{\partial{E}}{\partial{x_{n}}} = &\sum_{i}\delta_{i} \frac{\partial{y_{i}}}{\partial{x_{n}}}. \\ 
+\frac{\partial{E}}{\partial{W_{mn}}} = &\sum_{i}\delta_{i} \frac{\partial{y_{i}}}{\partial{W_{mn}}}. \\
+\frac{\partial{E}}{\partial{b_{m}}} = &\sum_{i}\delta_{i} \frac{\partial{y_{i}}}{\partial{b_{m}}}. 
+\end{align}
+The gradients are striaghtforward to compute and we write them as
+\begin{align}
+\frac{\partial{y_i}}{\partial{x_{n}}}  = &\sum_{k} W_{ik}\frac{\partial{x_{k}}}{\partial{x_{n}}} = W_{in} \\
+\frac{\partial{y_i}}{\partial{W_{mn}}} = &\sum_{k} \frac{\partial{W_{ik}}}{\partial{W_{mn}}} x_k=\left [ x_n \right]_{m=i} \\
+\frac{\partial{y_i}}{\partial{b_{m}}}  = &\frac{\partial{b_{i}}}{\partial{b_{m}}}= \left [1 \right]_{m=i}  
+\end{align}
+We can now expand the backprop update equations to become
+\begin{align}
+\frac{\partial{E}}{\partial{x_{n}}} = &\sum_{i}\delta_{i} W_{in} = \sum_{i} W^T_{ni}\delta_{i} \\ 
+\frac{\partial{E}}{\partial{W_{mn}}} = &\sum_{i}\delta_{i} \left [ x_n \right]_{m=i} = \delta_m x_n\\
+\frac{\partial{E}}{\partial{b_{m}}} = &\sum_{i}\delta_{i} \left [1 \right]_{m=i} = \delta_m
+\end{align}
+or in matrix/vector form
+\begin{align}
+\frac{\partial{E}}{\partial{x}} = &W^T\delta\\ 
+\frac{\partial{E}}{\partial{W}} = &\delta x^T\\
+\frac{\partial{E}}{\partial{b}} = &\delta
+\end{align}
+
+
+
+
+%---------------------------------------------------------------
 \subsection{Gram matrix}
 The (un-normalized) Gram matrix is computed as
 \begin{equation}
-G(X)=XX^T,
+F(X)=XX^T,
 \end{equation}
-where X is a $C\times N$ matrix. We denote a row of $X$ as $X_i$ and an element as $X_{ik}$. This implies that the Gram matrix can be written as
+where X is a $C\times N$ matrix and we set $Y=F(X)$. We denote a row of $X$ as $X_i$ and an element as $X_{ik}$. This implies that the Gram matrix can be written as
 \begin{equation}
-G_{ij}=\left \langle X_i,X_j \right \rangle = \sum_{k=0}^{N-1} X_{ik} X_{jk},
+Y_{ij}=\left \langle X_i,X_j \right \rangle = \sum_{k=0}^{N-1} X_{ik} X_{jk},
 \end{equation}
 where $i,j \in (0\dots C-1)$.Now for backprop we need to compute the following backprop quantity
 \begin{equation}
-\frac{\partial{E}}{\partial{X_{cn}}} = \sum_{i,j}\delta_{ij} \frac{\partial{G_{ij}}}{\partial{X_{cn}}}.
+\frac{\partial{E}}{\partial{X_{cn}}} = \sum_{i,j}\delta_{ij} \frac{\partial{Y_{ij}}}{\partial{X_{cn}}}.
 \end{equation}
 Here $E$ is the total loss for a single input example and $\delta$ is the gradient signal coming down from the next layer. The batch version will simply add the gradient for each example in the batch so to simplify notation we do not include the batch version here. 
 \begin{align}
 \begin{split}
- \frac{\partial{G_{ij}}}{\partial{X_{cn}}} = & \frac{ \partial \left (\sum_{k=0}^{N-1}X_{ik}X_{jk}\right )  }{\partial{X_{cn}}}\\ 
+ \frac{\partial{Y_{ij}}}{\partial{X_{cn}}} = & \frac{ \partial \left (\sum_{k=0}^{N-1}X_{ik}X_{jk}\right )  }{\partial{X_{cn}}}\\ 
  = & \sum_{k=0}^{N-1} \left [ \frac{\partial{X_{ik}}}{\partial{X_{cn}}} X_{jk} + \frac{\partial{X_{jk}}}{\partial{X_{cn}}} X_{ik} \right ]\\ 
  = & \sum_{k=0}^{N-1} \frac{\partial{X_{ik}}}{\partial{X_{cn}}} X_{jk} + \sum_{k=0}^{N-1} \frac{\partial{X_{jk}}}{\partial{X_{cn}}} X_{ik}\\ 
  = & \left [ X_{jn} \right ]_{c=i} + \left [ X_{in} \right ]_{c=j} 
