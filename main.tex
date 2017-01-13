@@ -41,7 +41,7 @@ We will consider here the most general function description of a neural network 
 
 %+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 \newpage
-\section{Neuron activation functions}
+\section{Neuron activation functions} \label{activation-functions}
 Neuron activation functions take a single input and produce a single output. There are two groups of such functions: those with tunable parameters and those without. However in the general case we can write down the following function
 \begin{equation}
 y = f(x,\theta),
@@ -54,14 +54,14 @@ where $x$ is a scalar input, $y$ is a scalar output and $\theta$ is a vector of 
 
 %---------------------------------------------------------------
 \subsection{ReLU}
-The {\bf Re}ctified {\bf L}inear {\bf U}nit function is given by
+The {\bf Re}ctified {\bf L}inear {\bf U}nit function is given by:
 \begin{equation}
 f(x)=\left\{\begin{matrix}
  & 0 & x< 0\\ 
  & x & x \geq 0
 \end{matrix}\right.
 \end{equation}
-Finding its derivative is straightforward. We simply find the derivative for each section in its domain. We can directly compute the backprop gradient
+Finding its derivative is straightforward. We simply find the derivative for each section in its domain. We can directly compute the backprop gradient:
 \begin{align}
 \frac{\mathrm{d} E }{\mathrm{d} x}= &\delta \frac{\mathrm{d} f }{\mathrm{d} x} \\
 = & \delta \left\{\begin{matrix}
@@ -96,7 +96,7 @@ Plugging the derivative into equation \ref{eq:elementwise}, we get
 
 %---------------------------------------------------------------
 \subsection{Sigmoid}
-The Sigmoid function is defined as
+The Sigmoid function is defined as:
 \begin{equation}
 \sigma (x)= \frac{1}{1+e^{-x}}.
 \end{equation}
@@ -107,7 +107,7 @@ Its derivative is simply
 &= \frac{1}{1+e^{-x}}\left(1-\frac{1}{1+e^{-x}}\right)\\
 &= \sigma(x)\left(1-\sigma(x)\right).
 \end{align}
-Plugging the derivative into equation \ref{eq:elementwise}, we get
+Plugging the derivative into equation \ref{eq:elementwise}, we get:
 \begin{align}
 \frac{\mathrm{d} E }{\mathrm{d} x}= &\delta \frac{\mathrm{d} \sigma }{\mathrm{d} x} \\
 = & \delta y\left ( 1-y \right ).
@@ -115,9 +115,34 @@ Plugging the derivative into equation \ref{eq:elementwise}, we get
 
 %---------------------------------------------------------------
 \subsection{Absolute value}
+
+The absolute value is defined as:
+
+\begin{equation}
+f(x)= |x|
+\end{equation}
+It can be said that $|x|$ is equivalent to $\sqrt{x^2}$ and therefore its dirivative can be written as:
+
+\begin{align}
+ \frac{\mathrm{d}f}{\mathrm{d}x} 
+ &=  \frac{\mathrm{d}}{\mathrm{d}x}\sqrt{x^2} \\
+ &=  \frac{\mathrm{d}}{\mathrm{d}x} (x^2)^\frac{1}{2}
+\end{align}
+Using the chain rule we get:
+\begin{align}
+\frac{\mathrm{d}f}{\mathrm{d}x} 
+&=  \frac{1}{2}(x^2)^{-\frac{1}{2}}(2x) \\
+&=  \frac{x}{\sqrt{x^2}} \\
+&=  \frac{x}{|x|}
+\end{align}
+Plugging the derivative into equation \ref{eq:elementwise}, we get:
+
+\begin{align}
+\frac{\mathrm{d} E }{\mathrm{d} x}= &\delta \frac{x}{|x|}
+\end{align}
+where $x \neq 0$
 %---------------------------------------------------------------
 \subsection{Power}
-
 
 %+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 \newpage
@@ -130,10 +155,42 @@ Max pooling takes in a
 \begin{equation}
 f(X)=\max\limits_{i \in 0 \cdots n} x_i
 \end{equation}
+
+%\begin{figure}[ht]\label{fig:general}
+%	\centering
+%	\includegraphics[width=0.60\textwidth]{maxPooling.pdf}
+%	\caption{This image illistrates an example of a max pooling function operating on a 4x4 matrix using non-overlapping regions. The result is a downsampled 2x2 matrix.}
+%\end{figure}
+
 %---------------------------------------------------------------
 \subsection{Max unpooling}
 %---------------------------------------------------------------
 \subsection{Average pooling}
+
+An average pooling layer performs down-sampling by computing the mean representation of the input $X$ with the use of an appropriate window function. Given a region determined by the window function represented by the vector $X_k$ with a set of activations \{$x_1,... x_{|X_k|}$\} $\in X_k$, the operation for average pooling can be defined as follows:
+
+\begin{equation}
+f(X_k) = \frac{1}{|X_k|}\sum\limits_{i \in X_k} x_{i} 
+\end{equation}
+The function $f$ receives an input vector which defines a region within $X$ and produces a scalar output representing the mean of the region. In the most common cases $f$ is applied to dijoint (non-overlapping) regions. To calculate the backpropagation in this layer we use the same principal shown in section \ref{activation-functions} above and start by computing $\frac{\mathrm{d}f}{\mathrm{d}x}$, which is calculated as follows:
+
+\begin{align}
+\frac{\mathrm{d}f}{\mathrm{d}x} 
+= & \frac{\mathrm{d}f}{\mathrm{d}x} \frac{1}{|X_k|}\sum\limits_{i \in X_k} x_{i}  \\
+= & \frac{1}{|X_k|}
+\end{align}
+Finally, plugging the derivative into equation \ref{eq:elementwise}, we get:
+
+\begin{align}
+\frac{\mathrm{d} E }{\mathrm{d} x}= &\delta \frac{1}{|X_k|}
+\end{align}
+%\begin{figure}[ht]\label{fig:general}
+%	\centering
+%	\includegraphics[width=0.60\textwidth]{avgPooling.pdf}
+%	\caption{This figure illistrates an example of an average pooling function operating on a 4x4 matrix using non-overlapping regions. The result is a downsampled 2x2 matrix.}
+%\end{figure}
+
+
 %---------------------------------------------------------------
 \subsection{Average unpooling}
 %---------------------------------------------------------------
